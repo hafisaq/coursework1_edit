@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>After School Activities</title>
+    <meta name="description" content="" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="" />
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.7.10/dist/vue.js"></script>
+    <script src="products.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css"
+      
+    />
+  </head>
+  <style>
+        #showproduct {
+        text-align: center;
+        background-color: #eeeeee;
+        padding-bottom: 10px;
+        padding-top: 10px;
+        }
+        #header
+        {
+            text-align: center;
+            background-color: #eeeeee;
+            padding-bottom: 10px;
+            padding-top: 10px;
+        }
+      
+    </style>
+  <body>
+    <!-- Mounting the app-->
+    <div id="app">
+      <header id = "header">
+        <h1 v-text="sitename"></h1>
+        <!-- Cart item count button-->
+        <!-- After every click from the addItem button, the value will increase by 1 (increments)-->
+        <button v-on:click="showCheckout" v-if = "cartItemCount">
+          {{cartItemCount}}
+          <span class="fas fa-cart-plus" ></span>
+         
+        </button>
+      
+      
+      </header>
+      <main>
+       
+        <div v-if="showproduct" id="showproduct">
+            <div>
+                <input type="text" v-model="search"  placeholder="Search" />
+                <i class="fa fa-search" ></i>
+              </div>
+              <div>
+                <select name="sortby" id="select" v-model="sortby">
+                  <option value="alphabetically">alphabetically</option>
+                  <option value="price">Price</option>
+                  <option value="slots">Slots</option>
+                </select>
+                <button v-on:click="ascending = !ascending" class="sort-button">
+                  <i v-if="ascending" class="fa fa-sort-up"></i>
+                  <i v-else class="fa fa-sort-down"></i>
+                </button>
+            </div>
+          <div v-for="product in filteredProductsName">
+            <figure>
+              <img v-bind:src="product.image" />
+            </figure>
+            <!-- Product details-->
+            <!-- V-model : enables two way data-binding to form input elements -->
+            <h2 v-text="product.title"></h2>
+            <!-- updates elements text content with the data in Vuejs-->
+            <p v-html="product.description"></p>
+            <!-- updates html elements text content, but it actually renders it, while v-text only treats it as a string -->
+            <p>Price:{{product.price}}</p>
+            <p>Location:{{product.location}}</p>
+            <p>Left:{{product.space}}</p>
+            <!-- Buttons -->
+            <!-- Button when product.space is not 0 -->
+            <button v-on:click="addItem(product)" v-if="canAddToCart(product)">
+              <!-- binds js snippets with vue js-->
+              Add to Cart please
+              <span class="fas fa-cart-plus"></span>    
+            </button>
+            <button disabled="disabled" v-else>
+              Add to Cart please
+              <span class="fas fa-cart-plus"></span>
+            </button>
+            <div>
+                <span v-for="n in product.rating"><i class="fa-solid fa-star"></i></span>
+                <span v-for="n in 5-product.rating"><i class="fa-regular fa-star"></i></span>
+            </div>
+
+            <!-- Button when product.space is 0  (it becomes disabled) -->
+
+            <div>
+                <span v-if = "product.availableInventory === cartCount(product.id)"> All out </span>
+                <span v-else-if = "product.availableInventory - cartCount(product.id) < 5 ">
+                    Only {{product.availableInventory-cartCount(product.id)}} left 
+                </span>
+                <span v-else>Buy now !!!</span>
+           </div>
+          </div>
+        </div>
+        <div v-else>
+          <h2>checkout</h2>
+          <p>
+            <strong> First name </strong>
+            <input v-model.trim="order.firstName" />
+            <strong> Last name </strong>
+            <input v-model.trim="order.lastName" />
+          </p>
+          <p>
+            <strong>State:</strong>
+            <select v-model="state">
+              <option disabled value="">State</option>
+              <option v-for="(state,key) in state" v-bind:value="state">
+                {{key}}
+              </option>
+              <!-- <option v-bind:value="states.dxb">DXB</option>
+                            <option v-bind:value="states.rak">RAK</option>
+                            <option v-bind:value="states.ajm">AJM</option>
+                            <option v-bind:value="states.fuj">FUJ</option> -->
+            </select>
+          </p>
+          <p>
+            <strong>Adress:</strong>
+            <input v-model="order.address" />
+            <strong>City</strong>
+            <input v-model="order.city" />
+          </p>
+
+          <p>
+            <strong>ZIP code:</strong>
+            <input v-model.number="order.zip" type="number" />
+          </p>
+          <p>
+            <input
+              v-model="order.gift"
+              value="gift"
+              id="gift"
+              type="checkbox"
+              v-bind:true-value="order.sendGift"
+              v-bind:false-value="order.donotGift"
+            />
+            <label for="gift">Gift</label>
+          </p>
+          <p>
+            <input v-model="order.method" value="home" id="home" type="radio" />
+            <label for="home">Home</label>
+            <input
+              v-model="order.method"
+              value="business"
+              id="business"
+              type="radio"
+            />
+            <label for="business">Business</label>
+          </p>
+
+            <div id="productInCart">
+             
+                <div v-for="i in this.cart" id="cart">
+                 
+                 <p>{{i.title}}</p>
+                 <p>{{i.description}}</p>
+                 <p>{{i.price}}</p>
+                 <figure>
+                    <img v-bind:src="i.image" />
+                  </figure>
+                  
+                  <button v-on:click = "deleteitem(i.id,i.title)">Delete</button>
+                 
+
+                </div>
+
+              
+     
+            </div>
+          
+            <h2>Order Information</h2>
+            <p>First Name: {{order.firstName}}</p>
+            <p>Last Name : {{order.lastName}}</p>
+            <p>Zip {{order.zip}}</p>
+            <p>state : {{order.state}}</p>
+            <p>Adress: {{order.address}}</p>
+            <p>City: {{order.city}}</p>
+            <p>Method:{{order.method}}</p>
+            <p>Gift:{{order.gift}}</p>
+        
+
+          <button v-on:click="submittedForm">Place order</button>
+        </div>
+      </main>
+    </div>
+
+    <script>
+      var webstore = new Vue({
+        // mounts the Vue application on a given DOM element.
+        el: "#app",
+        data: {
+          ascending: true,
+          sortby: "alphabetically",
+          sitename: "After School Activities",
+          products: products,
+          search: "",
+          cart: [],
+          cartitem:[],
+
+          showproduct: true,
+          order: {
+            firstname: "",
+            lasname: "",
+            city: "",
+
+            zip: "",
+            method: "home",
+            sendGift: "Send as a gift",
+            donotGift: "Do not send as a gift",
+          },
+          state: {
+            dxb: "Dubai",
+            rak: "Ras Al Khaima",
+            ajm: "Ajman",
+            fuj: "Fujaira",
+          },
+        },
+        //Method is an object associated with the Vue instance.
+        // Functions are defined inside the methods object
+        methods: {
+          // addItem is called after the first button is clicked
+          // method which decrements the product.space value after
+          //every click on the "Add to cart please" button
+          addItem(product) {
+
+            // this.cart.push({
+            //     id:product.id,title: product.title, 
+            //     price: product.price, description: product.description, image: product.image
+            // })
+            this.cart.push({
+                title: product.title,price: product.price,description: product.description,image:product.image
+            }),
+
+            this.cartitem.push(product.id)
+
+            // product.space = product.space - 1;
+            // this.cart.pop();
+
+
+                
+                
+            
+           
+            // this.cart.push(product.id)
+            // this.cart.push(product)
+         
+            product.space = product.space - 1;
+            product.availableInventory = product.availableInventory - 1; // decrementing the product.space
+          },
+          showCheckout() {  
+            this.showproduct = this.showproduct ? false : true;
+          },
+          submittedForm: function () {
+            alert("order placed successfully");
+          },
+          canAddToCart(product) {
+            // checking if product.available inventory is greater than cartCount value
+            // from the cartCount computed property
+            return product.availableInventory > this.cartCount(product.id);
+          },
+          showcart(){
+                if(this.cartisHidden == true){
+                    this.cartisHidden = false;
+                }else{
+                    this.cartisHidden = true;
+                }
+          },
+          cartCount(id) {
+            let count = 0;
+            for (let i = 0; i < this.cart.length; i++) {
+              if (this.cart[i] === id) {
+                count++;
+              }
+            }
+            return count;
+          },
+
+       
+
+
+          
+
+         
+        },
+        // computed properties enable you to create a property
+        // that can be used to modify, manipulate, and display
+        // data within your components in a readable and efficient manner.
+        computed: {
+          cartItemCount: function () {
+            // getting the size of cart array
+            return this.cartitem.length;
+          },
+          sortedProducts() {
+            let productsArray = this.products.slice(0);
+
+            function compare(a, b) {
+              if (a.price > b.price) return 1;
+              if (a.price < b.price) return -1;
+              return 0;
+            }
+            return productsArray.sort(compare);
+          },
+
+          filteredProductsName() {
+
+            if(this.search  )
+            {
+              this.products.forEach((element)=>{
+                let titleproduct = element.title.toLowerCase();
+                let locationproduct = element.location.toLowerCase();
+                if(this.search || this.search != "")
+                {
+                  element.show = true;
+                }
+               
+                  else{let searchproduct = this.search.toLowerCase();
+                  if(searchproduct[i]===titleproduct[i]||searchproduct[i]===locationproduct[i])
+                    element.show = true;
+                  else 
+                    {
+                      element.show = false;
+                      
+                    }
+                  
+                }
+              });
+            }
+
+            else if (this.sortby == "price") {
+              if (!this.ascending) {
+                let productsArray = this.products.slice(0);
+
+                function compare(a, b) {
+                  if (a.price > b.price) {
+                    return 1;
+                  }
+                  if (a.price < b.price) {
+                    return -1;
+                  }
+                  return 0;
+                }
+                return productsArray.sort(compare).reverse();
+              } else {
+                let productsArray = this.products.slice(0);
+                function compare(a, b) {
+                  if (a.price > b.price) {
+                    return 1;
+                  }
+                  if (a.price < b.price) {
+                    return -1;
+                  }
+                  return 0;
+                }
+                return productsArray.sort(compare);
+              }
+            } else if (this.sortby == "alphabetically") {
+              if (!this.ascending) {
+                let productsArray = this.products.slice(0);
+                function compare(a, b) {
+                  if (a.title > b.title) {
+                    return 1;
+                  }
+                  if (a.title < b.title) {
+                    return -1;
+                  }
+                  return 0;
+                }
+                return productsArray.sort(compare).reverse();
+              } else {
+                let productsArray = this.products.slice(0);
+                function compare(a, b) {
+                  if (a.title > b.title) {
+                    return 1;
+                  }
+                  if (a.title < b.title) {
+                    return -1;
+                  }
+                  return 0;
+                }
+                return productsArray.sort(compare);
+              }
+            } else if (this.sortby == "slots") {
+              if (!this.ascending) {
+                let productsArray = this.products.slice(0);
+                function compare(a, b) {
+                  if (a.space > b.space) {
+                    return 1;
+                  }
+                  if (a.space < b.space) {
+                    return -1;
+                  }
+                  return 0;
+                }
+                return productsArray.sort(compare).reverse();
+              } else {
+                let productsArray = this.products.slice(0);
+                function compare(a, b) {
+                  if (a.space > b.space) {
+                    return 1;
+                  }
+                  if (a.space < b.space) {
+                    return -1;
+                  }
+                  return 0;
+                }
+                return productsArray.sort(compare);
+              }
+            }
+          },
+         
+        },
+      });
+    </script>
+  </body>
+</html>
+
+<!-- 
+    Git is a distributed version control system
+    Git stages :
+    1. Modified
+    2. Staged 
+    3. Commit
+    Git sections : 
+    1. Working tree
+    2. Staging Area
+    3. Git directory 
+-->
